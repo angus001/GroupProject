@@ -1,0 +1,131 @@
+---
+title: "FinalTest"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(ggplot2)
+
+midwest <- read.csv(file="https://raw.githubusercontent.com/vincentarelbundock/Rdatasets/master/csv/ggplot2/midwest.csv", header=TRUE, sep=",") 
+
+library(sqldf)
+stateView<-sqldf(c("Drop table if exists state_View","CREATE table state_View
+  (state_id varchar(4), state_shortname varchar(3), countyName varchar(10));",
+  "Insert into state_View(state_shortname,countyName) Select state,county from midwest",
+  "Update state_View set state_id='IL1' where state_View.state_shortname='IL'",
+  "Update state_View set state_id='IN2' where state_View.state_shortname='IN'",
+  "Update state_View set state_id='MI3' where state_View.state_shortname='MI'",
+  "Update state_View set state_id='OH4' where state_View.state_shortname='OH'",
+  "Update state_View set state_id='WI5' where state_View.state_shortname='WI'",
+  "Select * from state_View"))
+
+midwest <- sqldf(c("Alter table midwest ADD state_idMW varchar(4)",
+  "Update midwest set state_idMW='IL1' where  midwest.state='IL'",
+  "Update midwest set state_idMW='IN2' where  midwest.state='IN'",
+  "Update midwest set state_idMW='MI3' where  midwest.state='MI'",
+  "Update midwest set state_idMW='OH4' where  midwest.state='OH'",
+  "Update midwest set state_idMW='WI5' where  midwest.state='WI'",
+  "Select * from midwest"))
+
+head(midwest)
+
+library(reshape2)
+z <- data.frame("State" = midwest$state, "White_Population"= midwest$popwhite, "African_American_Population"= midwest$popblack, "Native_American_Population"= midwest$popamerindian, "Asian_American_Population"= midwest$popasian, "Population_Other_Races"=midwest$popother)
+
+midwest2 <- melt(z,id.vars="State", variable.name = "Race", value.name = "population_by_Race" )
+head(midwest2)
+
+m <- aggregate(population_by_Race ~ (Race + State), data = midwest2, FUN = 'sum')
+m
+
+
+s <- ggplot(data = midwest2, aes(x = State, y = population_by_Race, fill = Race))
+s + geom_histogram(stat="identity")
+s + geom_histogram(stat = "identity", position = "dodge")
+
+ggplot(data = midwest2, aes(x = Race, y = population_by_Race, fill = Race)) + geom_histogram(stat = "identity") + facet_wrap(~State)
+
+colors()
+
+
+
+w <- subset(m,Race=="White_Population", select = Race:population_by_Race)
+
+wp <- ggplot (data = w, aes(x = State, y = population_by_Race))  ##fill = "White"
+Wp <- wp + geom_histogram(stat = "identity", position = "dodge" ) + xlab ("Midwest States") + ylab (" White Population Density") ##fill = "gold3"
+Wp
+
+
+
+b <- subset(m,Race == "African_American_Population")
+bp <- ggplot (data = b, aes(x = State, y = population_by_Race))
+bp <- bp + geom_histogram(stat = "identity",position = "dodge", fill = "gold3" ) +  xlab ("Midwest States") + ylab (" Black Population Density")
+
+
+
+a <- subset (m, Race == "Asian_American_Population")
+ap <-ggplot (data = a, aes(x = State, y = population_by_Race, fill = "Asian"))
+ap <- ap + geom_histogram(stat = "identity", position = "dodge") + xlab ("Midwest States") + ylab (" Asian Population Density")
+
+
+ai <- subset (m, Race == "Native_American_Population")
+aip <-ggplot (data = ai, aes(x = State, y = population_by_Race, fill = "Race"))
+aip <- aip + geom_histogram(stat = "identity", position = "dodge") + xlab ("Midwest States") + ylab ("Native American Population Density")
+
+ot <- subset (m, Race == "Population_Other_Races")
+otp <-ggplot (data = ot, aes(x = State, y = population_by_Race, fill = "Race"))
+otp <- otp + geom_histogram(stat = "identity",position = "dodge") + xlab ("Midwest States") + ylab (" Other Ethnic Density")
+
+
+EnterSelection <-function ()
+{
+eth <- readline (prompt = "Please choose from the following:
+                   1. White
+                   2. Black
+                   3. Asian
+                   4. American-Indian
+                   5. Other")
+if("1" %in% eth) 
+{
+return (  Wp <- wp + geom_histogram(stat = "identity", position = "dodge" ) + xlab ("Midwest States") + ylab (" White Population Density") )
+}
+
+if("2" %in% eth) 
+{
+return (bp <- bp + geom_histogram(stat = "identity",position = "dodge", fill = "gold3" ) +  xlab ("Midwest States") + ylab (" Black Population Density"))
+}
+
+if("3" %in% eth) 
+{
+  return (aip <- aip + geom_histogram(stat = "identity", position = "dodge") + xlab ("Midwest States") + ylab ("Asian Population Density"))
+}
+
+if("4" %in% eth) 
+{
+return (aip <- aip + geom_histogram(stat = "identity", position = "dodge") + xlab ("Midwest States") + ylab ("Native American Population Density"))
+}
+
+if("5" %in% eth) 
+{
+return (otp <- otp + geom_histogram(stat = "identity",position = "dodge") + xlab ("Midwest States") + ylab (" Other Ethnic Density"))
+}
+
+else {("please enter numeric option of 1 to 5 ") }
+
+}
+
+print(EnterSelection())
+a
+
+print(EnterSelection())
+1
+print(EnterSelection())
+2
+
+
+```
